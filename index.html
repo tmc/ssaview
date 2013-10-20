@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js"></script>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+<style> #source, #result { height: 900px; }</style>
+</head>
+
+<body>
+<div class="container">
+<h1>Go SSA viewer</h1>
+<p class="lead"><a href="https://github.com/tmc/ssaview">https://github.com/tmc/ssaview</a></p>
+<p class="lead">Shows the SSA (Static Single Assignment) representation of input code.<br/>Uses the wonderful <a href="http://godoc.org/code.google.com/p/go.tools/ssa">go.tools/ssa</a> package.</p>
+</div>
+<div id="tools">
+	<div class="well row">
+	<div>
+		<button id="submit" class="btn btn-default" type="submit">Render SSA</button>
+		status: <code id="msg" class="has-error"></code></li><br/>
+	</div>
+	<div id="userinput" class="col-sm-6">
+		<form id="form" target="/ssa" method="post">
+		Input
+		<pre id="source">
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Let's see some SSA")
+}</pre>
+		</form>
+	</div>
+	<div class="col-sm-6">
+		Result
+		<pre id="result"></pre>
+	</div>
+	</div>
+</div>
+
+<script>
+(function() {
+var form = $('#form')
+    ,error = $('#error')
+    ,msg = $('#msg')
+    ,source = $('#source')
+    ,submit = $('#submit')
+    ,result = $('#result')
+    ,editor = ace.edit("source")
+    ,result = ace.edit("result")
+
+form.submit(function(e){
+	msg.text("converting to SSA..")
+	e.preventDefault();
+	$.post(form[0].target, editor.getValue())
+	.done(function(data) {
+		data = $.parseJSON(data)
+		result.setValue(data.All)
+		result.clearSelection()
+		result.resize(true)
+		editor.resize(true)
+		error.text("(no errors)")
+		msg.text("done")
+	})
+	.fail(function (data) {
+		msg.text("error:"+$.parseJSON(data.responseText).Error)
+	})
+})
+
+var sourceTimeout
+source.on('keyup', function() {
+	if (sourceTimeout) { window.clearTimeout(sourceTimeout) }
+	sourceTimeout = setTimeout(function(){
+		source.submit()
+	}, 300)
+})
+$('#submit').hide() // don't need it if we have js
+source.submit()
+
+editor.setTheme("ace/theme/tomorrow_night")
+editor.getSession().setMode("ace/mode/golang")
+result.setTheme("ace/theme/tomorrow_night")
+result.getSession().setMode("ace/mode/golang")
+result.setReadOnly(true)
+
+// @todo resizing
+}())
+</script>
+</body>
+</html>
