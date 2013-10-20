@@ -28,12 +28,17 @@ package main
 import "fmt"
 
 func main() {
+	a, b := 42, 43
+	equal(a, b)
 	fmt.Println("Let's see the SSA representation of this program")
-	foo(42)
 }
 
-func foo(i int) bool {
-	return i == 42
+func equal(i, j int) bool {
+	// needless closure
+	inner := func() bool {
+		return i == j
+	}
+	return inner()
 }</pre>
 		</form>
 	</div>
