@@ -21,62 +21,49 @@ import (
 
 const indexPage = "index.html"
 
+type members []ssa.Member
+func (m members) Len() int           { return len(m) }
+func (m members) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
+func (m members) Less(i, j int) bool { return m[i].Pos() < m[j].Pos() }
+
 // toSSA converts go source to SSA
 func toSSA(source io.Reader, fileName, packageName string, debug bool) ([]byte, error) {
-
 	// adopted from saa package example
-	// Construct an importer.  Imports will be loaded as if by 'go build'.
 	imp := importer.New(&importer.Config{Build: &build.Default})
-
-	// Parse the input file.
 	file, err := parser.ParseFile(imp.Fset, fileName, source, 0)
 	if err != nil {
 		return nil, err
 	}
-
-	// Create single-file main package and import its dependencies.
 	mainInfo := imp.CreatePackage(packageName, file)
-
-	// Create SSA-form program representation.
 	var mode ssa.BuilderMode
 	prog := ssa.NewProgram(imp.Fset, mode)
 	if err := prog.CreatePackages(imp); err != nil {
 		return nil, err
 	}
 	mainPkg := prog.Package(mainInfo.Pkg)
-
-	// Print out the package.
 	out := new(bytes.Buffer)
 	mainPkg.SetDebugMode(debug)
 	mainPkg.DumpTo(out)
-
-	// Build SSA code for bodies of functions in mainPkg.
 	mainPkg.Build()
 
+	// grab just the functions
 	funcs := members([]ssa.Member{})
 	for _, obj := range mainPkg.Members {
 		if obj.Token() == token.FUNC {
 			funcs = append(funcs, obj)
 		}
 	}
+	// sort by Pos()
 	sort.Sort(funcs)
 	for _, f := range funcs {
 		mainPkg.Func(f.Name()).DumpTo(out)
 	}
-
 	return out.Bytes(), nil
 }
-
-type members []ssa.Member
-
-func (m members) Len() int           { return len(m) }
-func (m members) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
-func (m members) Less(i, j int) bool { return m[i].Pos() < m[j].Pos() }
 
 // writeJSON attempts to serialize data and write it to w
 // On error it will write an HTTP status of 400
 func writeJSON(w http.ResponseWriter, data interface{}) error {
-
 	if err, ok := data.(error); ok {
 		data = struct{ Error string }{err.Error()}
 		w.WriteHeader(400)
@@ -111,5 +98,4 @@ func main() {
 		port = "8080"
 	}
 	fmt.Println(http.ListenAndServe(":"+port, nil))
-
 }
