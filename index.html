@@ -28,7 +28,12 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("Let's see some SSA")
+	fmt.Println("Let's see the SSA representation of this program")
+	foo(42)
+}
+
+func foo(i int) bool {
+	return i == 42
 }</pre>
 		</form>
 	</div>
