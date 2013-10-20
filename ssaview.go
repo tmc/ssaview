@@ -22,19 +22,20 @@ import (
 const indexPage = "index.html"
 
 // toSSA converts go source to SSA
-func toSSA(source io.Reader) ([]byte, error) {
+func toSSA(source io.Reader, fileName, packageName string, debug bool) ([]byte, error) {
 
+	// adopted from saa package example
 	// Construct an importer.  Imports will be loaded as if by 'go build'.
 	imp := importer.New(&importer.Config{Build: &build.Default})
 
 	// Parse the input file.
-	file, err := parser.ParseFile(imp.Fset, "hello.go", source, 0)
+	file, err := parser.ParseFile(imp.Fset, fileName, source, 0)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create single-file main package and import its dependencies.
-	mainInfo := imp.CreatePackage("main", file)
+	mainInfo := imp.CreatePackage(packageName, file)
 
 	// Create SSA-form program representation.
 	var mode ssa.BuilderMode
@@ -46,7 +47,7 @@ func toSSA(source io.Reader) ([]byte, error) {
 
 	// Print out the package.
 	out := new(bytes.Buffer)
-	mainPkg.SetDebugMode(true)
+	mainPkg.SetDebugMode(debug)
 	mainPkg.DumpTo(out)
 
 	// Build SSA code for bodies of functions in mainPkg.
@@ -97,7 +98,7 @@ func main() {
 		io.Copy(w, f)
 	})
 	http.HandleFunc("/ssa", func(w http.ResponseWriter, r *http.Request) {
-		ssa, err := toSSA(r.Body)
+		ssa, err := toSSA(r.Body, "main.go", "main", false)
 		if err != nil {
 			writeJSON(w, err)
 			return
