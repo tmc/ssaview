@@ -14,5 +14,13 @@ License: ISC
   $ open http://localhost:8080/
 ```
 
+Deploying:
+
+On Heroku: Uses custom buildpack to preserve GOROOT:
+
+```sh
+$ heroku buildpacks:set https://github.com/tmc/heroku-buildpack-go.gi
+```
+
 Screenshot:
 ![Example screenshot](https://github.com/tmc/ssaview/raw/master/.screenshot.png)
