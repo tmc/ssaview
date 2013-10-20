@@ -1,5 +1,6 @@
 ssaview
 -------
+http://golang-ssaview.herokuapp.com/
 
 ssaview is a small utlity that renders SSA code alongside input Go code
 
