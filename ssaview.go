@@ -1,11 +1,12 @@
 // ssaview is a small utlity that renders SSA code alongside input Go code
 //
-// Runs via HTTP on :8080
+// Runs via HTTP on :8080 or the PORT environment variable
 package main
 
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"go/build"
 	"go/parser"
 	"go/token"
@@ -104,5 +105,10 @@ func main() {
 		defer r.Body.Close()
 		writeJSON(w, struct{ All string }{string(ssa)})
 	})
-	http.ListenAndServe(":8080", nil)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	fmt.Println(http.ListenAndServe(":"+port, nil))
+
 }
