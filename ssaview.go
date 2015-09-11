@@ -7,43 +7,47 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go/build"
-	"go/parser"
 	"go/token"
 	"io"
 	"net/http"
 	"os"
 	"sort"
 
-	"code.google.com/p/go.tools/importer"
-	"code.google.com/p/go.tools/ssa"
+	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/ssa/ssautil"
 )
 
 const indexPage = "index.html"
 
 type members []ssa.Member
+
 func (m members) Len() int           { return len(m) }
 func (m members) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m members) Less(i, j int) bool { return m[i].Pos() < m[j].Pos() }
 
+// if the io.Reader is nil the fileName will be read from disk.
 // toSSA converts go source to SSA
 func toSSA(source io.Reader, fileName, packageName string, debug bool) ([]byte, error) {
-	// adopted from saa package example
-	imp := importer.New(&importer.Config{Build: &build.Default})
-	file, err := parser.ParseFile(imp.Fset, fileName, source, 0)
+	// adopted such that it will runs with the new interface
+	var conf loader.Config
+	file, err := conf.ParseFile(fileName, source)
 	if err != nil {
 		return nil, err
 	}
-	mainInfo := imp.CreatePackage(packageName, file)
-	var mode ssa.BuilderMode
-	prog := ssa.NewProgram(imp.Fset, mode)
-	if err := prog.CreatePackages(imp); err != nil {
+
+	conf.CreateFromFiles("main", file)
+	iprog, err := conf.Load()
+	if err != nil {
 		return nil, err
 	}
-	mainPkg := prog.Package(mainInfo.Pkg)
+
+	prog := ssautil.CreateProgram(iprog, ssa.SanityCheckFunctions)
+	mainPkg := prog.Package(iprog.Created[0].Pkg)
+	prog.Build()
 	out := new(bytes.Buffer)
 	mainPkg.SetDebugMode(debug)
-	mainPkg.DumpTo(out)
+	ssa.WritePackage(out, mainPkg)
 	mainPkg.Build()
 
 	// grab just the functions
@@ -56,7 +60,7 @@ func toSSA(source io.Reader, fileName, packageName string, debug bool) ([]byte, 
 	// sort by Pos()
 	sort.Sort(funcs)
 	for _, f := range funcs {
-		mainPkg.Func(f.Name()).DumpTo(out)
+		ssa.WriteFunction(out, mainPkg.Func(f.Name()))
 	}
 	return out.Bytes(), nil
 }
