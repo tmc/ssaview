@@ -10,8 +10,8 @@ License: ISC
 
 ```sh
   $ go get github.com/a-wickert/ssaview
-  $ cd youtGoPath/github.com/a-wickert/ssaview
   $ go install github.com/a-wickert/ssaview
+  $ Optional: which ssaview should show you: $GOPATH/bin/ssaview
   $ ssaview &
   Than open localhost:8080
 ```
