@@ -10,8 +10,8 @@
 <body>
 <div class="container">
 <h1>Go SSA viewer</h1>
-<p class="lead"><a href="https://github.com/tmc/ssaview">https://github.com/tmc/ssaview</a></p>
-<p class="lead">Shows the <a href="http://en.wikipedia.org/wiki/Static_single_assignment_form">SSA (Static Single Assignment)</a> representation of input code.<br/>Uses the wonderful <a href="http://godoc.org/code.google.com/p/go.tools/ssa">go.tools/ssa</a> package.</p>
+<p class="lead"><a href="https://github.com/a-wickert/ssaview">https://github.com/a-wickert/ssaview</a></p>
+<p class="lead">Shows the <a href="http://en.wikipedia.org/wiki/Static_single_assignment_form">SSA (Static Single Assignment)</a> representation of input code.<br/>
 </div>
 <div id="tools">
 	<div class="well row">
@@ -30,8 +30,14 @@ import "fmt"
 func main() {
 	a, b := 42, 43
 	equal(a, b)
-	fmt.Println("Let's see the SSA representation of this program")
+	if a > 2 {
+		a = 0
+	} else {
+		a = 1
+	}
+	fmt.Printf("a: %d | b: %d", a, b)
 }
+
 
 func equal(i, j int) bool {
 	// needless closure
@@ -39,7 +45,8 @@ func equal(i, j int) bool {
 		return i == j
 	}
 	return inner()
-}</pre>
+}
+</pre>
 		</form>
 	</div>
 	<div class="col-sm-6">
