@@ -14,6 +14,12 @@ License: ISC
   $ open http://localhost:8080/
 ```
 
+Ideas for extension:
+
+- [ ] proper fullscreen ui
+- [ ] allow selection in one editor to highlight the associated code in the other
+- [ ] include interpreter
+
 Deploying:
 
 On Heroku: Uses custom buildpack to preserve GOROOT:
